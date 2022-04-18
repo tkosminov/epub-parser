@@ -61,21 +61,21 @@ export class EPubParser {
   }
 
   // private async parseBookToc() {
-  //   const toc_file = this.book_files.find((f) => f.path === 'OEBPS/toc.ncx')
+  //   const toc_file = this.book_files.find((f) => f.path.includes('toc.ncx'))
   //   const toc_json = await this.convertXmlToJson<ITocJson>(toc_file.data);
 
   //   // ...
   // }
 
   // private async parseBookContainer() {
-  //   const container_file = this.book_files.find((f) => f.path === 'META-INF/container.xml')
+  //   const container_file = this.book_files.find((f) => f.path.includes('container.xml'))
   //   const container_json = await this.convertXmlToJson<IContainerJson>(container_file.data);
 
   //   // ...
   // }
 
   private async parseBookContent() {
-    const content_file = this.book_files.find((f) => f.path === 'OEBPS/content.opf');
+    const content_file = this.book_files.find((f) => f.path.includes('content.opf'));
     const content_json = await this.convertXmlToJson<IContentJson>(content_file.data);
 
     const manifest = content_json.package.manifest[0];
@@ -112,11 +112,11 @@ export class EPubParser {
       cover,
       titlepage,
       sections: sections.sort((a, b) => {
-        if (a.id > b.id) {
+        if (a.href > b.href) {
           return 1;
         }
 
-        if (a.id < b.id) {
+        if (a.href < b.href) {
           return -1;
         }
 
@@ -224,7 +224,7 @@ export class EPubParser {
 }
 
 async function test() {
-  const file_path = `${__dirname}/../Log_Horizon_01.epub`;
+  const file_path = `${__dirname}/../Vampire_Hunter_D_24.epub`;
   const buffer = fs.readFileSync(file_path);
 
   const parsed_book = await new EPubParser(buffer).parse();
