@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "declaration": false,
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "skipLibCheck": true,
+    "declaration": true,
     "removeComments": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
@@ -10,17 +11,22 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "target": "es6",
+    "target": "ES2019",
     "sourceMap": true,
-    "outDir": "./dist",
-    "baseUrl": ".",
+    "outDir": "./dist-src",
+    "baseUrl": "src",
     "typeRoots": [
       "node_modules/@types",
-      "types"
+      "types",
+      "src/types",
     ]
   },
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "test",
+    ".git",
+    ".vscode",
+    "config"
   ]
 }

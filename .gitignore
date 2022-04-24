@@ -1,7 +1,14 @@
 Log_Horizon_01.epub
 Vampire_Hunter_D_24.epub
 
+test/file-1.json
+test/file-2.json
+test/file-3.json
+test/file-4.json
+
 plan.txt
 src/myjsonfile.json
 dist
+dist-lib
+dist-src
 node_modules

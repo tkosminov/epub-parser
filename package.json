@@ -1,9 +1,26 @@
 {
-  "name": "book-parser",
+  "name": "simple-epub-parser",
   "version": "1.0.0",
+  "author": "t.kosminov",
+  "description": "Simple epub parser",
+  "license": "MIT",
+  "private": false,
+  "main": "dist-src/index.js",
+  "types": "dist-src/index.d.ts",
+  "files": [
+    "dist-src",
+    "src"
+  ],
+  "keywords": [
+    "epub",
+    "parser"
+  ],
+  "repository": {
+    "url": "https://github.com/TimurRK/epub-parser"
+  },
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.build.json",
-    "start:dev": "ts-node ./src/index.ts",
+    "test": "ts-node ./test/index.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "lint-fix": "npm run lint -- --fix"
   },
