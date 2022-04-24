@@ -134,7 +134,6 @@ export async function parseEpub(book: Buffer) {
   const other: IContentItemJson[] = [];
 
   for (const item of manifest.item) {
-    console.log(item.$.href);
     if (item.$.id === 'cover' || item.$.id === 'coverpage') {
       cover = item.$;
     } else if (item.$.id === 'titlepage') {
