@@ -2,7 +2,181 @@ import AdmZip from 'adm-zip';
 import xml2js, { ParserOptions } from 'xml2js';
 import fs from 'fs';
 
-import { IContentItemJson, IContentJson, IParsedSectionChildren, ISectionChildren, ISectionJson } from './epub';
+type TTag = 'div' | 'a' | 'img' | 'image' | 'svg' | '__text__' | 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+
+// export interface IContainerJson {
+//   container: {
+//     $: {
+//       version: string;
+//       xmlns: string;
+//     };
+//     rootfiles: Array<{
+//       rootfile: Array<{
+//         $: {
+//           'full-path': string;
+//           'media-type': 'application/oebps-package+xml';
+//         }
+//       }>;
+//     }>;
+//   }
+// }
+
+// export interface ITocJson {
+//   ncx: {
+//     $: {
+//       version: string;
+//       'xml:lang': string;
+//       xmlns: string;
+//     };
+//     head: Array<{
+//       meta: Array<{
+//         $: {
+//           content: string;
+//           name: string;
+//         }
+//       }>
+//     }>;
+//     docTitle: Array<{
+//       text: string[];
+//     }>;
+//     navMap: Array<{
+//       navPoint: Array<{
+//         $: {
+//           class: string;
+//           id: string;
+//           playOrder: string;
+//         };
+//         navLabel: Array<{
+//           text: string[];
+//         }>;
+//         content: Array<{
+//           $: {
+//             src: string;
+//           }
+//         }>;
+//       }>
+//     }>
+//   }
+// }
+
+export interface IParsedSectionChildren {
+  type: 'image' | 'text';
+  value: string;
+  tag?: TTag;
+  extend?: boolean;
+  base64?: string;
+}
+
+export interface IContentItemJson {
+  id: string;
+  href: string;
+  'media-type': 'image/jpeg' | 'application/xhtml+xml' | 'text/css';
+  data?: IParsedSectionChildren[];
+}
+
+export interface IContentJson {
+  package: {
+    $: {
+      version: string;
+      'unique-identifier': string;
+      xmlns: string;
+    };
+    metadata: Array<{
+      $: {
+        'xmlns:calibre': string;
+        'xmlns:xsi': string;
+        'xmlns:opf': string;
+        'xmlns:dc': string;
+        'xmlns:dcterms': string;
+      };
+      meta: Array<{
+        $: {
+          name: string;
+          content: string;
+        };
+      }>;
+      'dc:date': Array<
+        | string
+        | {
+            _: string;
+            $: {
+              'opf:event': string;
+              'xmlns:opf': string;
+            };
+          }
+      >;
+      'dc:title': string[];
+      'dc:language': string[];
+      'dc:creator': Array<{
+        _: string;
+        $: {
+          'opf:role': string;
+          'opf:file-as': string;
+        };
+      }>;
+      'dc:contributor': Array<{
+        _: string;
+        $: {
+          'opf:role': string;
+        };
+      }>;
+      'dc:publisher': string[];
+      'dc:identifier': Array<{
+        _: string;
+        $: {
+          'opf:scheme'?: string;
+          id?: string;
+        };
+      }>;
+    }>;
+    manifest: Array<{
+      item: Array<{
+        $: IContentItemJson;
+      }>;
+    }>;
+    spine: Array<{
+      $: {
+        toc: string;
+      };
+      itemref: Array<{
+        $: {
+          idref: string;
+          linear?: string;
+        };
+      }>;
+    }>;
+    guide: Array<{
+      reference: Array<{
+        $: {
+          type: string;
+          title: string;
+          href: string;
+        };
+      }>;
+    }>;
+  };
+}
+
+export interface ISectionChildren {
+  _: string;
+  $: {
+    src: string;
+    class: string;
+    alt?: string;
+    'xlink:href'?: string;
+  };
+  '#name': TTag;
+  $$?: ISectionChildren[];
+}
+
+export interface ISectionJson {
+  html: {
+    body: Array<{
+      $$: ISectionChildren[];
+    }>;
+  };
+}
+
 
 interface IUnzipFile {
   path: string;
@@ -131,27 +305,112 @@ export class EPubParser {
   private parseSectionChildren(children: ISectionChildren): IParsedSectionChildren[] {
     const childrens: IParsedSectionChildren[] = [];
 
-    if (children.$$?.length) {
-      for (const child of children.$$) {
-        childrens.push(...this.parseSectionChildren(child));
-      }
-    } else {
-      switch (children['#name']) {
-        case 'img':
-          childrens.push({
-            type: 'image',
-            value: children.$.src,
-          });
-          break;
-        default:
-          if (children._?.length) {
-            childrens.push({
-              type: 'text',
-              value: children._,
+    switch (children['#name']) {
+      case 'div':
+        if (children.$$?.length) {
+          let extened_text = ''
+
+          for (const child of children.$$) {
+            this.parseSectionChildren(child).forEach((parsed_child) => {
+              if (!['p', 'div', 'img', 'svg', 'image'].includes(parsed_child.tag)) {
+                if (parsed_child.value?.length) {
+                  extened_text += parsed_child.value
+                }
+              } else {
+                if (extened_text.length) {
+                  childrens.push({
+                    type: 'text',
+                    value: extened_text,
+                    tag: children['#name'],
+                  })
+        
+                  extened_text = ''
+                }
+
+                childrens.push(parsed_child)
+              }
             });
           }
-          break;
-      }
+
+          if (extened_text.length) {
+            childrens.push({
+              type: 'text',
+              value: extened_text,
+              tag: children['#name'],
+            })
+  
+            extened_text = ''
+          }
+        } else if (children._?.length) {
+          childrens.push({
+            type: 'text',
+            value: children._,
+            tag: children['#name'],
+          });
+        }
+        break;
+      case 'p':
+        if (children.$$?.length) {
+          let extened_text = ''
+  
+          for (const child of children.$$) {
+            this.parseSectionChildren(child).forEach((parsed_child) => {
+              if (parsed_child.type === 'image') {
+                childrens.push(parsed_child)
+              } else {
+                if (parsed_child.value?.length) {
+                  extened_text += parsed_child.value
+                }
+              }
+            })
+          }
+  
+          if (extened_text.length) {
+            childrens.push({
+              type: 'text',
+              value: extened_text,
+              tag: children['#name'],
+            })
+  
+            extened_text = ''
+          }
+        } else if (children._?.length) {
+          childrens.push({
+            type: 'text',
+            value: children._,
+            tag: children['#name'],
+          });
+        }
+        break;
+      case 'svg':
+        for (const child of children.$$) {
+          childrens.push(...this.parseSectionChildren(child))
+        }
+      case 'img':
+      case 'image':
+        let value = children.$.src;
+
+        if (children.$.hasOwnProperty('xlink:href')) {
+          value = children.$['xlink:href']
+        }
+
+        if (value?.length) {
+          childrens.push({
+            type: 'image',
+            value: value,
+            tag: children['#name'],
+          });
+        }
+        break;
+      default:
+        if (children._?.length) {
+          childrens.push({
+            type: 'text',
+            value: children._,
+            tag: children['#name'],
+          });
+        }
+        break;
     }
 
     return childrens.flat(Infinity);
@@ -170,12 +429,17 @@ export class EPubParser {
             type: 'image',
             value: this.book_content.cover.href,
             base64: this.toBase64(cover_file.data, this.book_content.cover['media-type']),
+            tag: 'img',
           },
         ];
       }
     }
 
     for (const section of this.book_content.sections) {
+      // if (section.href !== 'Text/part0000.xhtml') {
+      //   continue
+      // }
+
       const section_buffer = this.book_files.find((f) => f.path.includes(section.href)).data;
       const section_json = await this.convertXmlToJson<ISectionJson>(section_buffer, {
         preserveChildrenOrder: true,
@@ -186,37 +450,28 @@ export class EPubParser {
       const section_content: IParsedSectionChildren[] = [];
 
       for (const body of section_json.html.body) {
-        for (const paragraph of body.$$) {
-          const parsed_paragraph = this.parseSectionChildren(paragraph);
+        for (const block of body.$$) {
+          const parsed_paragraph = this.parseSectionChildren(block);
 
-          const res = parsed_paragraph.reduce(
-            (acc, curr) => {
-              if (curr.type === 'image') {
-                const image_file = this.book_files.find((f) => f.path.includes(curr.value.split('../')[1]));
+          for (const el of parsed_paragraph) {
+            if (el.value?.length) {
+              if (el.type === 'image') {
+                const image_file = this.book_files.find((f) => f.path.includes(el.value.split('../')[1]));
 
                 if (image_file) {
-                  curr.base64 = this.toBase64(image_file.data, this.book_content.cover['media-type']);
+                  el.base64 = this.toBase64(image_file.data, this.book_content.cover['media-type']);
                 }
-
-                acc.images.push(curr);
-              } else {
-                acc.text.value += curr.value;
               }
 
-              return acc;
-            },
-            { images: [], text: { value: '', type: 'text' } }
-          );
+              delete el.tag;
 
-          section_content.push(...res.images);
-
-          if (res.text.value.length) {
-            section_content.push(res.text as IParsedSectionChildren);
+              section_content.push(el);
+            }
           }
         }
       }
 
-      section.data = section_content.filter((a) => a.value?.length);
+      section.data = section_content;
     }
 
     return this.book_content;
@@ -224,7 +479,8 @@ export class EPubParser {
 }
 
 async function test() {
-  const file_path = `${__dirname}/../Vampire_Hunter_D_24.epub`;
+  // const file_path = `${__dirname}/../Vampire_Hunter_D_24.epub`;
+  const file_path = `${__dirname}/../Log_Horizon_01.epub`;
   const buffer = fs.readFileSync(file_path);
 
   const parsed_book = await new EPubParser(buffer).parse();
