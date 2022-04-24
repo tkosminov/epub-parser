@@ -1,5 +1,5 @@
 {
-  "name": "simple-epub-parser",
+  "name": "epub-parser-simple",
   "version": "1.0.0",
   "author": "t.kosminov",
   "description": "Simple epub parser",
@@ -13,7 +13,8 @@
   ],
   "keywords": [
     "epub",
-    "parser"
+    "parser",
+    "simple"
   ],
   "repository": {
     "url": "https://github.com/TimurRK/epub-parser"
