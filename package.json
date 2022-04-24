@@ -20,7 +20,7 @@
     "url": "https://github.com/TimurRK/epub-parser"
   },
   "scripts": {
-    "build": "rimraf dist && tsc -p tsconfig.build.json",
+    "build": "rimraf dist-src && tsc -p tsconfig.build.json",
     "test": "ts-node ./test/index.ts",
     "lint": "eslint \"{src,apps,libs}/**/*.ts\"",
     "lint-fix": "npm run lint -- --fix"
