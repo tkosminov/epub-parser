@@ -1,3 +1,5 @@
+import { basename } from 'path';
+
 import { IContainerJson, IContentItemJson, IContentJson, IParsedBook, IParsedContentItemJson, ISectionChildren, ISectionJson } from './types';
 import { convertXmlToJson, toBase64, unzip } from './utils';
 
@@ -120,7 +122,7 @@ export async function parseEpub(book: Buffer) {
 
   const rootfile_path = container_file_json.container.rootfiles[0].rootfile[0].$['full-path'];
 
-  const rootfile = files.find((f) => f.path.includes(rootfile_path));
+  const rootfile = files.find((f) => f.path.includes(basename(rootfile_path)));
   const rootfile_json = await convertXmlToJson<IContentJson>(rootfile.data);
 
   const manifest = rootfile_json.package.manifest[0];
@@ -157,7 +159,7 @@ export async function parseEpub(book: Buffer) {
   parsed_book.sections = sections;
 
   if (parsed_book.cover) {
-    const cover_file = files.find((f) => f.path.includes(parsed_book.cover.href));
+    const cover_file = files.find((f) => f.path.includes(basename(parsed_book.cover.href)));
 
     if (cover_file) {
       parsed_book.cover.parsed_data = [
@@ -186,7 +188,7 @@ export async function parseEpub(book: Buffer) {
         for (const el of parseSectionChildren(tag)) {
           if (el.value?.length) {
             if (el.type === 'image') {
-              const image_file = files.find((f) => f.path.includes(el.value.split('../')[1]));
+              const image_file = files.find((f) => f.path.includes(basename(el.value)));
 
               if (image_file) {
                 el.base64 = toBase64(image_file.data, 'image/jpeg');
