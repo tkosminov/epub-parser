@@ -1,6 +1,14 @@
 import { basename } from 'path';
 
-import { IContainerJson, IContentItemJson, IContentJson, IParsedBook, IParsedContentItemJson, ISectionChildren, ISectionJson } from './types';
+import {
+  IContainerJson,
+  IContentItemJson,
+  IContentJson,
+  IParsedBook,
+  IParsedContentItemJson,
+  ISectionChildren,
+  ISectionJson,
+} from './types';
 import { convertXmlToJson, toBase64, unzip } from './utils';
 
 function parseSectionChildren(children: ISectionChildren) {
