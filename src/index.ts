@@ -1,4 +1,4 @@
-import { IContentItemJson, IContentJson, IParsedBook, IParsedContentItemJson, ISectionChildren, ISectionJson } from './types';
+import { IContainerJson, IContentItemJson, IContentJson, IParsedBook, IParsedContentItemJson, ISectionChildren, ISectionJson } from './types';
 import { convertXmlToJson, toBase64, unzip } from './utils';
 
 function parseSectionChildren(children: ISectionChildren) {
@@ -116,7 +116,7 @@ export async function parseEpub(book: Buffer) {
   const parsed_book: IParsedBook = {};
 
   const container_file = files.find((f) => f.path.includes('container.xml'));
-  const container_file_json: any = await convertXmlToJson(container_file.data);
+  const container_file_json = await convertXmlToJson<IContainerJson>(container_file.data);
 
   const rootfile_path = container_file_json.container.rootfiles[0].rootfile[0].$['full-path'];
 
