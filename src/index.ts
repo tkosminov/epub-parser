@@ -182,7 +182,7 @@ export async function parseEpub(book: Buffer) {
   }
 
   for (const section of parsed_book.sections) {
-    const section_file = files.find((f) => f.path.includes(section.href));
+    const section_file = files.find((f) => f.path.includes(basename(section.href)));
     const section_json = await convertXmlToJson<ISectionJson>(section_file.data, {
       preserveChildrenOrder: true,
       charsAsChildren: true,
