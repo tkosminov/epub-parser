@@ -55,6 +55,7 @@ function parseSectionChildren(children: ISectionChildren) {
       }
       break;
     case 'p':
+    case 'a':
     case 'h1':
     case 'h2':
     case 'h3':
