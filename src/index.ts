@@ -21,7 +21,7 @@ function parseSectionChildren(children: ISectionChildren) {
 
         for (const child of children.$$) {
           for (const el of parseSectionChildren(child)) {
-            if (['img', 'image', 'div', 'p', 'svg'].includes(el.tag)) {
+            if (['img', 'image', 'div', 'p', 'svg', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(el.tag)) {
               if (extened_text.length) {
                 results.push({
                   type: 'text',
