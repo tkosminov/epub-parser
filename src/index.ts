@@ -146,15 +146,15 @@ export async function parseEpub(book: Buffer) {
   const other: IContentItemJson[] = [];
 
   for (const item of manifest.item) {
-    if (item.$.id === 'cover' || item.$.id === 'coverpage') {
+    if (['cover', 'coverpage', 'cover-image'].includes(item.$.id)) {
       cover = item.$;
-    } else if (item.$.id === 'titlepage') {
+    } else if (['titlepage'].includes(item.$.id)) {
       titlepage = item.$;
-    } else if (item.$['media-type'] === 'application/xhtml+xml') {
+    } else if (['application/xhtml+xml'].includes(item.$['media-type'])) {
       sections.push(item.$);
-    } else if (item.$['media-type'] === 'image/jpeg' || item.$['media-type'] === 'image/png') {
+    } else if (['image/jpeg', 'image/png'].includes(item.$['media-type'])) {
       images.push(item.$);
-    } else if (item.$['media-type'] === 'text/css') {
+    } else if (['text/css'].includes(item.$['media-type'])) {
       styles.push(item.$);
     } else {
       other.push(item.$);
