@@ -3,7 +3,7 @@ import fs from 'fs';
 import { parseEpub } from "../src";
 
 async function test() {
-  for (const file_name of ['Log_Horizon_01']) {
+  for (const file_name of ['Goblin_Slayer_Volume_10']) {
     const file_path = `${__dirname}/../samples/${file_name}.epub`;
 
     const buffer = fs.readFileSync(file_path);

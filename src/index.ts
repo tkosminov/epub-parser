@@ -16,12 +16,13 @@ function parseSectionChildren(children: ISectionChildren) {
 
   switch (children['#name']) {
     case 'div':
+    case 'section':
       if (children.$$?.length) {
         let extened_text = '';
 
         for (const child of children.$$) {
           for (const el of parseSectionChildren(child)) {
-            if (['img', 'image', 'div', 'p', 'svg', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(el.tag)) {
+            if (['img', 'image', 'div', 'section', 'p', 'svg', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(el.tag)) {
               if (extened_text.length) {
                 results.push({
                   type: 'text',

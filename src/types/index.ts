@@ -1,4 +1,4 @@
-export type TTag = 'div' | 'a' | 'img' | 'image' | 'svg' | '__text__' | 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+export type TTag = 'div' | 'a' | 'img' | 'image' | 'svg' | '__text__' | 'span' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'section';
 export type TMedia = 'image/jpeg' | 'image/png' | 'application/xhtml+xml' | 'text/css';
 
 export interface IContainerJson {
