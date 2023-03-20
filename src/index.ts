@@ -4,6 +4,7 @@ import {
   IContainerJson,
   IContentItemJson,
   IContentJson,
+  IContentJsonMetadata,
   IParsedBook,
   IParsedContentItemJson,
   ISectionChildren,
@@ -17,25 +18,50 @@ function parseSectionChildren(children: ISectionChildren) {
   switch (children['#name']) {
     case 'div':
     case 'section':
+    case 'nav':
+    case 'ol':
+    case 'ul':
       if (children.$$?.length) {
         let extened_text = '';
 
         for (const child of children.$$) {
           for (const el of parseSectionChildren(child)) {
-            if (['img', 'image', 'div', 'section', 'p', 'svg', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(el.tag)) {
-              if (extened_text.length) {
-                results.push({
-                  type: 'text',
-                  value: extened_text,
-                  tag: 'div',
-                });
+            switch (el.tag) {
+              case 'div':
+              case 'section':
+              case 'nav':
+              case 'ol':
+              case 'ul':
+              case 'li':
+              case 'img':
+              case 'image':
+              case 'svg':
+              case 'p':
+              case 'h1':
+              case 'h2':
+              case 'h3':
+              case 'h4':
+              case 'h5':
+              case 'h6':
+                if (extened_text.length) {
+                  results.push({
+                    type: 'text',
+                    value: extened_text,
+                    tag: 'div',
+                  });
 
-                extened_text = '';
-              }
+                  extened_text = '';
+                }
 
-              results.push(el);
-            } else if (el.value?.length) {
-              extened_text += el.value;
+                results.push(el);
+
+                break;
+              default:
+                if (el.value?.length) {
+                  extened_text += el.value;
+                }
+
+                break;
             }
           }
         }
@@ -54,9 +80,11 @@ function parseSectionChildren(children: ISectionChildren) {
           tag: children['#name'],
         });
       }
+
       break;
     case 'p':
     case 'a':
+    case 'li':
     case 'h1':
     case 'h2':
     case 'h3':
@@ -90,11 +118,13 @@ function parseSectionChildren(children: ISectionChildren) {
           tag: children['#name'],
         });
       }
+
       break;
     case 'svg':
       for (const child of children.$$) {
         results.push(...parseSectionChildren(child));
       }
+
       break;
     case 'image':
     case 'img':
@@ -107,6 +137,7 @@ function parseSectionChildren(children: ISectionChildren) {
           tag: 'img',
         });
       }
+
       break;
     default:
       if (children._?.length) {
@@ -116,6 +147,7 @@ function parseSectionChildren(children: ISectionChildren) {
           tag: children['#name'],
         });
       }
+
       break;
   }
 
@@ -136,21 +168,21 @@ export async function parseEpub(book: Buffer) {
   const rootfile_json = await convertXmlToJson<IContentJson>(rootfile.data);
 
   const manifest = rootfile_json.package.manifest[0];
-  const metadata = rootfile_json.package.metadata[0];
+  let metadata: IContentJsonMetadata;
 
-  let cover: IContentItemJson;
-  let titlepage: IContentItemJson;
+  if (rootfile_json.package.metadata != null) {
+    metadata = rootfile_json.package.metadata[0];
+  } else if (rootfile_json.package['opf:metadata'] != null) {
+    metadata = rootfile_json.package['opf:metadata'][0];
+  }
+
   const sections: IContentItemJson[] = [];
   const images: IContentItemJson[] = [];
   const styles: IContentItemJson[] = [];
   const other: IContentItemJson[] = [];
 
   for (const item of manifest.item) {
-    if (['cover', 'coverpage', 'cover-image'].includes(item.$.id)) {
-      cover = item.$;
-    } else if (['titlepage'].includes(item.$.id)) {
-      titlepage = item.$;
-    } else if (['application/xhtml+xml'].includes(item.$['media-type'])) {
+    if (['application/xhtml+xml'].includes(item.$['media-type'])) {
       sections.push(item.$);
     } else if (['image/jpeg', 'image/png'].includes(item.$['media-type'])) {
       images.push(item.$);
@@ -165,23 +197,39 @@ export async function parseEpub(book: Buffer) {
   parsed_book.lang = metadata['dc:language']?.[0];
   parsed_book.author = metadata['dc:creator']?.[0]?._;
   parsed_book.publisher = metadata['dc:publisher']?.[0];
-  parsed_book.cover = cover;
-  parsed_book.sections = sections;
 
-  if (parsed_book.cover) {
-    const cover_file = files.find((f) => f.path.includes(basename(parsed_book.cover.href)));
+  let cover_from_meta: string;
+
+  if (metadata.meta) {
+    cover_from_meta = metadata.meta.find((m) => m.$.name === 'cover')?.$?.content;
+  }
+
+  if (!cover_from_meta && metadata['opf:meta']) {
+    cover_from_meta = metadata['opf:meta'].find((m) => m.$.name === 'cover')?.$?.content;
+  }
+
+  if (cover_from_meta) {
+    const cover_image = images.find((i) => i.id === cover_from_meta);
+    const cover_file = files.find((f) => f.path.includes(basename(cover_image.href)));
 
     if (cover_file) {
-      parsed_book.cover.parsed_data = [
-        {
-          type: 'image',
-          value: parsed_book.cover.href,
-          base64: toBase64(cover_file.data, 'image/jpeg'),
-          tag: 'img',
-        },
-      ];
+      parsed_book.cover = {
+        id: cover_from_meta,
+        href: cover_image.href,
+        'media-type': 'image/jpeg',
+        parsed_data: [
+          {
+            type: 'image',
+            value: cover_image.href,
+            base64: toBase64(cover_file.data, 'image/jpeg'),
+            tag: 'img',
+          },
+        ],
+      };
     }
   }
+
+  parsed_book.sections = sections;
 
   for (const section of parsed_book.sections) {
     const section_file = files.find((f) => f.path.includes(basename(section.href)));
